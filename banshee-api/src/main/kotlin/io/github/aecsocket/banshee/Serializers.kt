@@ -1,9 +1,10 @@
 package io.github.aecsocket.banshee
 
 import io.github.aecsocket.alexandria.extension.registerExact
+import io.github.aecsocket.banshee.format.GeckoLib
 import org.spongepowered.configurate.serialize.TypeSerializerCollection
 
 val bansheeApiSerializers: TypeSerializerCollection = TypeSerializerCollection.builder()
-    .registerExact(GeckoLibAnimation.Easing.Serializer)
-    .registerExact(GeckoLibAnimation.Keyframes.Serializer)
+    .registerExact(GeckoLib.GLAnimation.Easing.Serializer)
+    .registerExact(GeckoLib.GLAnimation.Keyframes.Serializer)
     .build()
