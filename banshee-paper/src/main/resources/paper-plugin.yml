@@ -1,0 +1,9 @@
+name: Banshee
+version: $version
+main: ${group}.banshee.paper.Banshee
+description: $description
+api-version: 1.19
+authors: [ aecsocket ]
+website: https://github.com/aecsocket/banshee
+folia-supported: true
+

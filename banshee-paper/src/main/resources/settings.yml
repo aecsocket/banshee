@@ -1,0 +1,8 @@
+# Config file for Banshee
+# Example file is available at
+# https://github.com/aecsocket/banshee/blob/main/banshee-paper/src/main/resources/settings.yml
+
+# The default locale to use for the plugin. Must be a valid Java locale.
+# string: en-US
+default-locale: en-US
+
