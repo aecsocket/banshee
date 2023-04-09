@@ -17,13 +17,26 @@ private const val VECTOR = "vector"
 @ConfigSerializable
 data class GeckoLibAnimation(
     @Required @Setting("animation_length") val length: Float,
-    @Setting("bones") val bones: MutableMap<String, MutableMap<Property, Keyframes>> = HashMap(),
+    @Setting("loop") val loop: Loop = Loop.PLAY_ONCE,
+    @Setting("override_previous_animation") val overridePreviousAnimation: Boolean = false,
+    @Setting("anim_time_update") val animTimeUpdate: Float = 0.0f,
+    @Setting("blend_weight") val blendWeight: Float = 0.0f,
+    @Setting("start_delay") val startDelay: Float = 0.0f,
+    @Setting("loop_delay") val loopDelay: Float = 0.0f,
+    @Setting("bones") val bones: MutableMap<String, Properties> = HashMap(),
 ) {
-    enum class Property {
-        ROTATION,
-        POSITION,
-        SCALE,
+    enum class Loop {
+        PLAY_ONCE,
+        HOLD_ON_LAST_FRAME,
+        LOOP,
     }
+
+    @ConfigSerializable
+    data class Properties(
+        @Setting("rotation") val rotation: Keyframes = Keyframes(),
+        @Setting("position") val position: Keyframes = Keyframes(),
+        @Setting("scale") val scale: Keyframes = Keyframes(),
+    )
 
     sealed interface Easing {
         object Linear : Easing
@@ -142,7 +155,7 @@ data class GeckoLibAnimation(
     )
 
     data class Keyframes(
-        private val all: MutableList<TimedKeyframe>,
+        private val all: MutableList<TimedKeyframe> = ArrayList(),
     ) : List<TimedKeyframe> by all {
         object Serializer : TypeSerializer<Keyframes> {
             override fun serialize(type: Type, obj: Keyframes?, node: ConfigurationNode) {}
