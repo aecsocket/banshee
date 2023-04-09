@@ -16,4 +16,3 @@ rootProject.name = "banshee"
 
 include("banshee-api")
 include("banshee-paper")
-

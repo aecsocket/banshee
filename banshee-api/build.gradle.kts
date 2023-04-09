@@ -6,6 +6,7 @@ plugins {
 dependencies {
     implementation(libs.kotlinxCoroutinesCore)
     implementation(libs.klam)
-    implementation(libs.klamConfigurate)
     implementation(libs.configurateCore)
+    implementation(libs.configurateExtraKotlin)
+    implementation(libs.alexandriaApi)
 }
