@@ -94,8 +94,7 @@ class Animation(
         )
     }.associate { it }
 
-    fun bone(key: String) = bones[key]
-        ?: throw IllegalArgumentException("Invalid bone '$key'")
+    fun bone(key: String) = bones[key] ?: emptyBone
 }
 
 data class AnimationTransform(
@@ -120,3 +119,10 @@ class AnimationBone internal constructor(
         )
     }
 }
+
+private val emptyBone = AnimationBone(
+    pivot = FVec3(0.0f),
+    position = { FVec3(0.0f) },
+    rotation = { FVec3(0.0f) },
+    scale = { FVec3(1.0f) },
+)

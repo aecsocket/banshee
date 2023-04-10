@@ -163,10 +163,26 @@ object GeckoLib {
     }
 
     @ConfigSerializable
-    internal data class Keyframe(
+    internal data class GLKeyframe(
         @Required @Setting("vector") val vector: FVec3,
         @Setting(nodeFromParent = true) val easing: Easing,
     )
+
+    @ConfigSerializable
+    internal data class BBKeyframe(
+        @Required @Setting("post") val post: Post,
+        @Setting("lerp_mode") val lerpMode: LerpMode = LerpMode.LINEAR,
+    ) {
+        enum class LerpMode {
+            LINEAR,
+            CATMULLROM,
+        }
+
+        @ConfigSerializable
+        data class Post(
+            @Required @Setting("vector") val vector: FVec3,
+        )
+    }
 
     fun deserializeAnimations(geometry: Geometry, node: ConfigurationNode) : Map<String, Animation> {
         val type = Animation::class.java
@@ -192,28 +208,30 @@ object GeckoLib {
 
                     fun timeline(
                         node: ConfigurationNode,
-                        mapper: (Float) -> Float,
+                        mapper: (FVec3) -> FVec3,
                     ): Animation.Timeline<FVec3> {
                         return if (node.contains(VECTOR)) {
                             // one keyframe at t = 0.0
-                            val keyframe = node.force<Keyframe>()
+                            val keyframe = node.force<GLKeyframe>()
                             Animation.Timeline(listOf(Animation.Keyframe(
                                 time = 0.0f,
-                                value = keyframe.vector.map(mapper),
+                                value = mapper(keyframe.vector),
                             )))
                         } else {
-                            val keyframes = node.force<MutableMap<Float, Keyframe>>()
+                            val keyframes = node.force<MutableMap<Float, GLKeyframe>>()
                             Animation.Timeline(keyframes.map { (time, keyframe) ->
                                 Animation.Keyframe(
                                     time = time,
-                                    value = keyframe.vector.map(mapper),
+                                    value = mapper(keyframe.vector),
                                 )
                             }.sortedBy { it.time })
                         }
                     }
 
                     val position = timeline(bone.node(POSITION)) { it / SCALE_FACTOR }
-                    val rotation = timeline(bone.node(ROTATION)) { radians(it) }
+                    val rotation = timeline(bone.node(ROTATION)) { (x, y, z) ->
+                        FVec3(-radians(x), -radians(y), radians(z))
+                    }
                     val scale = timeline(bone.node(SCALE)) { it }
 
                     boneKey.toString() to Animation.BoneDescriptor(
