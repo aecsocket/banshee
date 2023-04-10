@@ -5,6 +5,5 @@ import io.github.aecsocket.banshee.format.GeckoLib
 import org.spongepowered.configurate.serialize.TypeSerializerCollection
 
 val bansheeApiSerializers: TypeSerializerCollection = TypeSerializerCollection.builder()
-    .registerExact(GeckoLib.GLAnimation.Easing.Serializer)
-    .registerExact(GeckoLib.GLAnimation.Keyframes.Serializer)
+    .registerExact(GeckoLib.Easing.Serializer)
     .build()

@@ -2,14 +2,12 @@ package io.github.aecsocket.banshee.paper
 
 import com.github.retrooper.packetevents.PacketEvents
 import io.github.aecsocket.alexandria.LoggingList
-import io.github.aecsocket.alexandria.extension.force
 import io.github.aecsocket.alexandria.extension.registerExact
 import io.github.aecsocket.alexandria.paper.AlexandriaPlugin
 import io.github.aecsocket.alexandria.paper.fallbackLocale
 import io.github.aecsocket.alexandria.paper.render.DisplayRenders
 import io.github.aecsocket.alexandria.paper.render.Renders
 import io.github.aecsocket.alexandria.paper.seralizer.alexandriaPaperSerializers
-import io.github.aecsocket.banshee.format.GeckoLibAnimations
 import io.github.aecsocket.banshee.bansheeApiSerializers
 import io.github.aecsocket.glossa.MessageProxy
 import io.github.aecsocket.glossa.configurate.LocaleSerializer
@@ -91,11 +89,5 @@ class Banshee : AlexandriaPlugin(Manifest("banshee",
 
     override fun load(log: LoggingList) {
         messages = glossa.messageProxy()
-        val anims = configLoaderBuilder()
-            .file(dataFolder.resolve("anim.json"))
-            .build()
-            .load()
-            .force<GeckoLibAnimations>()
-        println(anims)
     }
 }

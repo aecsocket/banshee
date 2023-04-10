@@ -1,12 +1,11 @@
 package io.github.aecsocket.banshee.paper
 
-import io.github.aecsocket.alexandria.extension.force
 import io.github.aecsocket.alexandria.paper.BaseCommand
 import io.github.aecsocket.alexandria.paper.Context
 import io.github.aecsocket.alexandria.paper.extension.position
 import io.github.aecsocket.alexandria.paper.render.ModelDescriptor
 import io.github.aecsocket.alexandria.paper.render.PlayerTracker
-import io.github.aecsocket.banshee.format.GeckoLibAnimations
+import io.github.aecsocket.banshee.format.GeckoLib
 import io.github.aecsocket.glossa.messageProxy
 import io.github.aecsocket.klam.*
 import org.bukkit.Material
@@ -40,12 +39,17 @@ internal class BansheeCommand(
         root.spawn()
         val child = banshee.renders.createModel(desc, tracker, origin)
         child.spawn()
-        val animations = banshee.configLoaderBuilder()
+
+        val geometry = GeckoLib.deserializeGeometry(banshee.configLoaderBuilder()
+            .file(banshee.dataFolder.resolve("anim.geo.json"))
+            .build().load()
+        )
+        val animations = GeckoLib.deserializeAnimations(geometry, banshee.configLoaderBuilder()
             .file(banshee.dataFolder.resolve("anim.json"))
-            .build()
-            .load()
-            .force<GeckoLibAnimations>()
-        val animation = animations["animation.model.new"]!!.createAnimation()
+            .build().load()
+        )
+
+        val animation = animations["animation.model.new"]!!
 
         val rootBone = animation.bone("root")
         val childBone = animation.bone("child1")
