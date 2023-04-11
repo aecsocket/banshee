@@ -1,5 +1,6 @@
 package io.github.aecsocket.banshee.paper
 
+import io.github.aecsocket.alexandria.Billboard
 import io.github.aecsocket.alexandria.paper.BaseCommand
 import io.github.aecsocket.alexandria.paper.Context
 import io.github.aecsocket.alexandria.paper.extension.position
@@ -12,7 +13,6 @@ import io.github.aecsocket.banshee.format.GeckoLib
 import io.github.aecsocket.glossa.messageProxy
 import io.github.aecsocket.klam.*
 import org.bukkit.Material
-import org.bukkit.entity.Display
 import org.bukkit.entity.Player
 import org.bukkit.inventory.ItemStack
 import org.bukkit.inventory.meta.ItemMeta
@@ -29,9 +29,9 @@ internal class BansheeCommand(
 
     private fun test(ctx: Context) {
         val sender = ctx.sender as Player
-        val scale = FVec3(1.0f)
         val tracker = PlayerTracker { setOf(sender) }
-        val origin = DAffine3(sender.eyeLocation.position(), FQuat.identity())
+        val basePosition = sender.location.position()
+        val originTransform = FAffine3()
 
         data class Bone(
             val key: String,
@@ -79,38 +79,38 @@ internal class BansheeCommand(
         val animations = GeckoLib.deserializeAnimations(geometry, banshee.configLoaderBuilder()
             .file(banshee.dataFolder.resolve("player.animation.json"))
             .build().load())
-        val animation = animations["walk"]!!
+        val walkAnimation = animations["walk"]!!
 
         tree.walk { bone ->
-            bone.animation = animation.bone(bone.key)
-            val modelData = bone.modelData ?: return@walk
-            bone.render = banshee.renders.createModel(ModelDescriptor(
-                scale = scale,
-                billboard = Display.Billboard.FIXED,
-                item = ItemStack(Material.STICK).withMeta<ItemMeta> {
-                    it.setCustomModelData(modelData)
-                },
-            ), tracker, origin).apply { spawn() }
+            bone.animation = walkAnimation.bone(bone.key)
+            bone.modelData?.let { modelData ->
+                bone.render = banshee.renders.createModel(ModelDescriptor(
+                    item = ItemStack(Material.STICK).withMeta<ItemMeta> {
+                        it.setCustomModelData(modelData)
+                    },
+                    tracker = tracker,
+                    billboard = Billboard.NONE,
+                    interpolationDuration = 2,
+                ), basePosition, originTransform).apply { spawn() }
+            }
         }
 
         val start = System.currentTimeMillis()
         banshee.scheduling.onEntity(sender).runRepeating { task ->
             val time = (System.currentTimeMillis() - start) / 1000.0f
 
-            fun update(bone: Bone, parentTransform: DAffine3, parentScale: FVec3) {
-                val (animTransform, animScale) = tree.animation.transform[time]
+            fun update(bone: Bone, parentTransform: FAffine3) {
+                val animTransform = bone.animation.transform[time]
                 val thisTransform = parentTransform * animTransform
-                val thisScale = parentScale * animScale
                 bone.render?.let { render ->
-                    render.transform = DAffine3(thisTransform)
-                    render.scale = FVec3(thisScale)
+                    render.transform = thisTransform
                 }
                 bone.children.forEach { child ->
-                    update(child, thisTransform, thisScale)
+                    update(child, thisTransform)
                 }
             }
 
-            update(tree, origin, scale)
+            update(tree, originTransform)
 
             if (System.currentTimeMillis() > start + 10_000) {
                 task.cancel()

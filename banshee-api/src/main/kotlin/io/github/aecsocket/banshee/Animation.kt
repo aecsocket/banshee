@@ -13,6 +13,10 @@ class Animation(
     val loop: Loop,
     bones: Map<String, BoneDescriptor>,
 ) {
+    init {
+        assertGtEq("length", 0.0f, length)
+    }
+
     enum class Loop {
         NONE,
         HOLD_LAST_FRAME,
@@ -97,11 +101,6 @@ class Animation(
     fun bone(key: String) = bones[key] ?: emptyBone
 }
 
-data class AnimationTransform(
-    val transform: DAffine3,
-    val scale: FVec3,
-)
-
 class AnimationBone internal constructor(
     val pivot: FVec3,
     val position: AnimationCurve<FVec3>,
@@ -110,11 +109,9 @@ class AnimationBone internal constructor(
 ) {
     val transform = AnimationCurve { time ->
         val rotation = asQuat(rotation[time], EulerOrder.XYZ)
-        AnimationTransform(
-            DAffine3(
-                DVec3(position[time] - (rotation * pivot) + pivot),
-                rotation,
-            ),
+        FAffine3(
+            position[time] - (rotation * pivot) + pivot,
+            rotation,
             scale[time],
         )
     }

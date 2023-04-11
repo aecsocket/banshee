@@ -6,9 +6,6 @@ import io.github.aecsocket.klam.*
 import org.spongepowered.configurate.ConfigurationNode
 import org.spongepowered.configurate.kotlin.extensions.contains
 import org.spongepowered.configurate.kotlin.extensions.get
-import org.spongepowered.configurate.objectmapping.ConfigSerializable
-import org.spongepowered.configurate.objectmapping.meta.Required
-import org.spongepowered.configurate.objectmapping.meta.Setting
 import org.spongepowered.configurate.serialize.SerializationException
 import org.spongepowered.configurate.serialize.TypeSerializer
 import java.lang.reflect.Type
@@ -22,6 +19,7 @@ private const val LOOP = "loop"
 private const val MINECRAFT_GEOMETRY = "minecraft:geometry"
 private const val NAME = "name"
 private const val PIVOT = "pivot"
+private const val POST = "post"
 private const val POSITION = "position"
 private const val ROTATION = "rotation"
 private const val SCALE = "scale"
@@ -162,39 +160,32 @@ object GeckoLib {
         }
     }
 
-    @ConfigSerializable
-    internal data class GLKeyframe(
-        @Required @Setting("vector") val vector: FVec3,
-        @Setting(nodeFromParent = true) val easing: Easing,
-    )
-
-    @ConfigSerializable
-    internal data class BBKeyframe(
-        @Required @Setting("post") val post: Post,
-        @Setting("lerp_mode") val lerpMode: LerpMode = LerpMode.LINEAR,
+    internal data class Keyframe(
+        val vector: FVec3,
     ) {
-        enum class LerpMode {
-            LINEAR,
-            CATMULLROM,
+        object Serializer : TypeSerializer<Keyframe> {
+            override fun serialize(type: Type, obj: Keyframe?, node: ConfigurationNode) {}
+            override fun deserialize(type: Type, node: ConfigurationNode): Keyframe {
+                return if (node.contains(VECTOR)) {
+                    // GeckoLib keyframe
+                    Keyframe(
+                        vector = node.node(VECTOR).force(),
+                    )
+                } else {
+                    // Blockbench keyframe
+                    Keyframe(
+                        vector = node.node(POST).node(VECTOR).force(),
+                    )
+                }
+            }
         }
-
-        @ConfigSerializable
-        data class Post(
-            @Required @Setting("vector") val vector: FVec3,
-        )
     }
 
     fun deserializeAnimations(geometry: Geometry, node: ConfigurationNode) : Map<String, Animation> {
         val type = Animation::class.java
         return node.node(ANIMATIONS).childrenMap().map { (animationKey, animation) ->
-            val length = animation.node(ANIMATION_LENGTH).let { nLength ->
-                val value = nLength.force<Float>()
-                if (value <= 0.0f)
-                    throw SerializationException(nLength, type, "Animation length must be >= 0.0")
-                value
-            }
+            val length = animation.node(ANIMATION_LENGTH).get { 0.0f }
             val loop = animation.node(LOOP).get { Loop.FALSE }
-
             animationKey.toString() to Animation(
                 length = length,
                 loop = when (loop) {
@@ -212,13 +203,13 @@ object GeckoLib {
                     ): Animation.Timeline<FVec3> {
                         return if (node.contains(VECTOR)) {
                             // one keyframe at t = 0.0
-                            val keyframe = node.force<GLKeyframe>()
+                            val keyframe = node.force<Keyframe>()
                             Animation.Timeline(listOf(Animation.Keyframe(
                                 time = 0.0f,
                                 value = mapper(keyframe.vector),
                             )))
                         } else {
-                            val keyframes = node.force<MutableMap<Float, GLKeyframe>>()
+                            val keyframes = node.force<MutableMap<Float, Keyframe>>()
                             Animation.Timeline(keyframes.map { (time, keyframe) ->
                                 Animation.Keyframe(
                                     time = time,
